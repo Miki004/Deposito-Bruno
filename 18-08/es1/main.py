@@ -10,7 +10,16 @@ def conta_parole(file: list) -> int:
         count_parole += len(parole) 
     return count_parole
 
+def top_frequenze(file:list) -> list:
+    top_frequenze = {}
+    tutte_parole = []
+    for riga in file:
+        tutte_parole.extend(riga.split())
+    for parole in tutte_parole:
+        top_frequenze[parole] = (tutte_parole.count(parole))
+    ordinate = sorted(top_frequenze.items(), key=lambda x: x[1], reverse=True)
 
+    return ordinate[:5]
 
 
 def leggi_file() :
@@ -19,6 +28,7 @@ def leggi_file() :
             righe = file.readlines()
             print(f"Numero di righe: {conta_righe(righe)}")
             print(f"Numero di parole: {conta_parole(righe)}")
+            print(f"Top 5 parole più frequenti: {top_frequenze(righe)}")
     except: 
         raise FileNotFoundError("Impossibile leggere il file.")
     
