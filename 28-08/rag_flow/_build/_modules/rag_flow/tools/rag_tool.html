@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rag_flow.tools.rag_tool &#8212; RagCrewai Documentation  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for rag_flow.tools.rag_tool</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">crewai.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">tool</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Type</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">crewai.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseTool</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.vectorstores</span><span class="w"> </span><span class="kn">import</span> <span class="n">FAISS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureOpenAIEmbeddings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatPromptTemplate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.output_parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrOutputParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnablePassthrough</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureChatOpenAI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+<span class="n">load_dotenv</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RAGSystem">
+<a class="viewcode-back" href="../../../source_docs/rag_flow.tools.html#rag_flow.tools.rag_tool.RAGSystem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RAGSystem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Manages the RAG (Retrieval Augmented Generation) system for medical information.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">persist_dir</span> <span class="o">=</span> <span class="s2">&quot;faiss_index_medical&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="mi">4</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_embeddings</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">llm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_llm</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vector_store</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chain</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_rag</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Inizializza embedding Azure OpenAI&quot;&quot;&quot;</span>
+        <span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;API_KEY&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">AzureOpenAIEmbeddings</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="s2">&quot;text-embedding-ada-002&quot;</span><span class="p">,</span>
+            <span class="n">azure_endpoint</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;AZURE_ENDPOINT&quot;</span><span class="p">),</span>
+            <span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span>
+        <span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_llm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Inizializza LLM Azure OpenAI&quot;&quot;&quot;</span>
+        <span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;API_LLM_KEY&quot;</span><span class="p">)</span>
+        <span class="n">endpoint</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;AZURE_LLM_ENDPOINT&quot;</span><span class="p">)</span>
+        <span class="n">deployment</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;AZURE_DEPLOYMENT_NAME&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">AzureChatOpenAI</span><span class="p">(</span>
+            <span class="n">deployment_name</span><span class="o">=</span><span class="n">deployment</span><span class="p">,</span>
+            <span class="n">openai_api_version</span><span class="o">=</span><span class="s2">&quot;2024-12-01-preview&quot;</span><span class="p">,</span>
+            <span class="n">azure_endpoint</span><span class="o">=</span><span class="n">endpoint</span><span class="p">,</span>
+            <span class="n">openai_api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">,</span>
+            <span class="n">temperature</span><span class="o">=</span><span class="mf">0.1</span>
+        <span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_medical_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Crea documenti medici di esempio hardcodati&quot;&quot;&quot;</span>
+        <span class="n">medical_documents</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="c1"># Malattie respiratorie</span>
+            <span class="n">Document</span><span class="p">(</span>
+                <span class="n">page_content</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;L&#39;asma è una malattia respiratoria cronica caratterizzata da infiammazione delle vie aeree.</span>
+<span class="s2">                Sintomi principali:</span>
+<span class="s2">                - Dispnea (difficoltà respiratoria)</span>
+<span class="s2">                - Tosse persistente, specialmente notturna</span>
+<span class="s2">                - Respiro sibilante</span>
+<span class="s2">                - Senso di oppressione toracica</span>
+<span class="s2">                </span>
+<span class="s2">                Cause:</span>
+<span class="s2">                - Allergeni (acari, pollini, pelo di animali)</span>
+<span class="s2">                - Irritanti (fumo, inquinamento)</span>
+<span class="s2">                - Infezioni respiratorie</span>
+<span class="s2">                - Esercizio fisico intenso</span>
+<span class="s2">                - Stress emotivo</span>
+<span class="s2">                </span>
+<span class="s2">                Trattamento:</span>
+<span class="s2">                - Broncodilatatori a breve durata (salbutamolo)</span>
+<span class="s2">                - Corticosteroidi inalatori per controllo a lungo termine</span>
+<span class="s2">                - Antileucotrieni</span>
+<span class="s2">                - Evitare i trigger</span>
+<span class="s2">                - Piano d&#39;azione personalizzato per gestire le crisi&quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;categoria&quot;</span><span class="p">:</span> <span class="s2">&quot;respiratorio&quot;</span><span class="p">,</span> <span class="s2">&quot;malattia&quot;</span><span class="p">:</span> <span class="s2">&quot;asma&quot;</span><span class="p">}</span>
+            <span class="p">),</span>
+            
+            <span class="n">Document</span><span class="p">(</span>
+                <span class="n">page_content</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;L&#39;influenza è una malattia respiratoria contagiosa causata dai virus influenzali.</span>
+<span class="s2">                </span>
+<span class="s2">                Sintomi tipici:</span>
+<span class="s2">                - Febbre alta improvvisa (38-40°C)</span>
+<span class="s2">                - Dolori muscolari e articolari</span>
+<span class="s2">                - Mal di testa intenso</span>
+<span class="s2">                - Tosse secca</span>
+<span class="s2">                - Mal di gola</span>
+<span class="s2">                - Stanchezza estrema</span>
+<span class="s2">                - Naso che cola o congestionato</span>
+<span class="s2">                </span>
+<span class="s2">                Prevenzione:</span>
+<span class="s2">                - Vaccinazione annuale</span>
+<span class="s2">                - Lavaggio frequente delle mani</span>
+<span class="s2">                - Evitare contatti con persone malate</span>
+<span class="s2">                - Coprire bocca e naso quando si starnutisce</span>
+<span class="s2">                </span>
+<span class="s2">                Trattamento:</span>
+<span class="s2">                - Riposo a letto</span>
+<span class="s2">                - Idratazione abbondante</span>
+<span class="s2">                - Antipiretici (paracetamolo, ibuprofene)</span>
+<span class="s2">                - Antivirali se iniziati entro 48 ore (oseltamivir)&quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;categoria&quot;</span><span class="p">:</span> <span class="s2">&quot;infettivo&quot;</span><span class="p">,</span> <span class="s2">&quot;malattia&quot;</span><span class="p">:</span> <span class="s2">&quot;influenza&quot;</span><span class="p">}</span>
+            <span class="p">),</span>
+            
+            <span class="c1"># Malattie metaboliche</span>
+            <span class="n">Document</span><span class="p">(</span>
+                <span class="n">page_content</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Il diabete mellito è una malattia cronica caratterizzata da alti livelli di glucosio nel sangue.</span>
+<span class="s2">                </span>
+<span class="s2">                Diabete di Tipo 1:</span>
+<span class="s2">                - Esordio in età giovane</span>
+<span class="s2">                - Distruzione autoimmune delle cellule beta pancreatiche</span>
+<span class="s2">                - Richiede insulina esogena</span>
+<span class="s2">                </span>
+<span class="s2">                Diabete di Tipo 2:</span>
+<span class="s2">                - Più comune negli adulti</span>
+<span class="s2">                - Resistenza all&#39;insulina</span>
+<span class="s2">                - Spesso associato a obesità</span>
+<span class="s2">                </span>
+<span class="s2">                Sintomi comuni:</span>
+<span class="s2">                - Poliuria (minzione frequente)</span>
+<span class="s2">                - Polidipsia (sete eccessiva)</span>
+<span class="s2">                - Perdita di peso inspiegabile</span>
+<span class="s2">                - Visione offuscata</span>
+<span class="s2">                - Stanchezza cronica</span>
+<span class="s2">                - Guarigione lenta delle ferite</span>
+<span class="s2">                </span>
+<span class="s2">                Gestione:</span>
+<span class="s2">                - Monitoraggio glicemico regolare</span>
+<span class="s2">                - Dieta equilibrata e controllo carboidrati</span>
+<span class="s2">                - Esercizio fisico regolare</span>
+<span class="s2">                - Farmaci orali (metformina) o insulina</span>
+<span class="s2">                - Controllo del peso</span>
+<span class="s2">                - Gestione dello stress&quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;categoria&quot;</span><span class="p">:</span> <span class="s2">&quot;metabolico&quot;</span><span class="p">,</span> <span class="s2">&quot;malattia&quot;</span><span class="p">:</span> <span class="s2">&quot;diabete&quot;</span><span class="p">}</span>
+            <span class="p">),</span>
+            
+            <span class="c1"># Malattie cardiovascolari</span>
+            <span class="n">Document</span><span class="p">(</span>
+                <span class="n">page_content</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;L&#39;ipertensione arteriosa è una condizione caratterizzata da pressione sanguigna costantemente elevata.</span>
+<span class="s2">                </span>
+<span class="s2">                Classificazione:</span>
+<span class="s2">                - Normale: &lt;120/80 mmHg</span>
+<span class="s2">                - Elevata: 120-129/&lt;80 mmHg</span>
+<span class="s2">                - Ipertensione stadio 1: 130-139/80-89 mmHg</span>
+<span class="s2">                - Ipertensione stadio 2: ≥140/90 mmHg</span>
+<span class="s2">                </span>
+<span class="s2">                Fattori di rischio:</span>
+<span class="s2">                - Età avanzata</span>
+<span class="s2">                - Storia familiare</span>
+<span class="s2">                - Obesità</span>
+<span class="s2">                - Sedentarietà</span>
+<span class="s2">                - Dieta ricca di sodio</span>
+<span class="s2">                - Stress cronico</span>
+<span class="s2">                - Fumo e alcol</span>
+<span class="s2">                </span>
+<span class="s2">                Complicanze:</span>
+<span class="s2">                - Infarto miocardico</span>
+<span class="s2">                - Ictus</span>
+<span class="s2">                - Insufficienza renale</span>
+<span class="s2">                - Retinopatia</span>
+<span class="s2">                </span>
+<span class="s2">                Trattamento:</span>
+<span class="s2">                - Modifiche dello stile di vita (dieta DASH)</span>
+<span class="s2">                - ACE-inibitori</span>
+<span class="s2">                - Beta-bloccanti</span>
+<span class="s2">                - Diuretici</span>
+<span class="s2">                - Calcio-antagonisti</span>
+<span class="s2">                - Monitoraggio regolare&quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;categoria&quot;</span><span class="p">:</span> <span class="s2">&quot;cardiovascolare&quot;</span><span class="p">,</span> <span class="s2">&quot;malattia&quot;</span><span class="p">:</span> <span class="s2">&quot;ipertensione&quot;</span><span class="p">}</span>
+            <span class="p">),</span>
+            
+            <span class="c1"># Malattie gastrointestinali</span>
+            <span class="n">Document</span><span class="p">(</span>
+                <span class="n">page_content</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;La gastrite è l&#39;infiammazione della mucosa gastrica che può essere acuta o cronica.</span>
+<span class="s2">                </span>
+<span class="s2">                Cause principali:</span>
+<span class="s2">                - Infezione da Helicobacter pylori</span>
+<span class="s2">                - Uso prolungato di FANS</span>
+<span class="s2">                - Consumo eccessivo di alcol</span>
+<span class="s2">                - Stress grave</span>
+<span class="s2">                - Reflusso biliare</span>
+<span class="s2">                </span>
+<span class="s2">                Sintomi:</span>
+<span class="s2">                - Dolore epigastrico</span>
+<span class="s2">                - Nausea e vomito</span>
+<span class="s2">                - Sensazione di pienezza dopo i pasti</span>
+<span class="s2">                - Perdita di appetito</span>
+<span class="s2">                - Bruciore di stomaco</span>
+<span class="s2">                - Eruttazione frequente</span>
+<span class="s2">                </span>
+<span class="s2">                Diagnosi:</span>
+<span class="s2">                - Endoscopia con biopsia</span>
+<span class="s2">                - Test per H. pylori</span>
+<span class="s2">                - Esami del sangue</span>
+<span class="s2">                </span>
+<span class="s2">                Trattamento:</span>
+<span class="s2">                - Inibitori di pompa protonica</span>
+<span class="s2">                - Antibiotici per H. pylori</span>
+<span class="s2">                - Antiacidi</span>
+<span class="s2">                - Modifiche dietetiche</span>
+<span class="s2">                - Evitare irritanti gastrici&quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;categoria&quot;</span><span class="p">:</span> <span class="s2">&quot;gastrointestinale&quot;</span><span class="p">,</span> <span class="s2">&quot;malattia&quot;</span><span class="p">:</span> <span class="s2">&quot;gastrite&quot;</span><span class="p">}</span>
+            <span class="p">),</span>
+            
+            <span class="c1"># Malattie neurologiche</span>
+            <span class="n">Document</span><span class="p">(</span>
+                <span class="n">page_content</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;L&#39;emicrania è un disturbo neurologico caratterizzato da mal di testa ricorrenti e intensi.</span>
+<span class="s2">                </span>
+<span class="s2">                Caratteristiche:</span>
+<span class="s2">                - Dolore pulsante unilaterale</span>
+<span class="s2">                - Durata 4-72 ore</span>
+<span class="s2">                - Intensità moderata-severa</span>
+<span class="s2">                </span>
+<span class="s2">                Sintomi associati:</span>
+<span class="s2">                - Nausea e vomito</span>
+<span class="s2">                - Fotofobia (sensibilità alla luce)</span>
+<span class="s2">                - Fonofobia (sensibilità ai suoni)</span>
+<span class="s2">                - Aura visiva nel 25</span><span class="si">% d</span><span class="s2">ei casi</span>
+<span class="s2">                </span>
+<span class="s2">                Trigger comuni:</span>
+<span class="s2">                - Stress</span>
+<span class="s2">                - Cambiamenti ormonali</span>
+<span class="s2">                - Alcuni alimenti (cioccolato, formaggi stagionati)</span>
+<span class="s2">                - Alterazioni del sonno</span>
+<span class="s2">                - Cambiamenti meteorologici</span>
+<span class="s2">                </span>
+<span class="s2">                Trattamento:</span>
+<span class="s2">                - Triptani per attacchi acuti</span>
+<span class="s2">                - FANS</span>
+<span class="s2">                - Beta-bloccanti per profilassi</span>
+<span class="s2">                - Antiepilettici preventivi</span>
+<span class="s2">                - Tecniche di rilassamento</span>
+<span class="s2">                - Diario delle emicranie&quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;categoria&quot;</span><span class="p">:</span> <span class="s2">&quot;neurologico&quot;</span><span class="p">,</span> <span class="s2">&quot;malattia&quot;</span><span class="p">:</span> <span class="s2">&quot;emicrania&quot;</span><span class="p">}</span>
+            <span class="p">),</span>
+            
+            <span class="c1"># Allergie</span>
+            <span class="n">Document</span><span class="p">(</span>
+                <span class="n">page_content</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;La rinite allergica è un&#39;infiammazione della mucosa nasale causata da reazione allergica.</span>
+<span class="s2">                </span>
+<span class="s2">                Tipi:</span>
+<span class="s2">                - Stagionale (febbre da fieno)</span>
+<span class="s2">                - Perenne (tutto l&#39;anno)</span>
+<span class="s2">                </span>
+<span class="s2">                Sintomi tipici:</span>
+<span class="s2">                - Starnuti ripetuti</span>
+<span class="s2">                - Rinorrea acquosa</span>
+<span class="s2">                - Congestione nasale</span>
+<span class="s2">                - Prurito nasale, oculare e palatale</span>
+<span class="s2">                - Lacrimazione</span>
+<span class="s2">                - Occhiaie allergiche</span>
+<span class="s2">                </span>
+<span class="s2">                Allergeni comuni:</span>
+<span class="s2">                - Pollini (graminacee, alberi)</span>
+<span class="s2">                - Acari della polvere</span>
+<span class="s2">                - Pelo di animali domestici</span>
+<span class="s2">                - Muffe</span>
+<span class="s2">                </span>
+<span class="s2">                Trattamento:</span>
+<span class="s2">                - Antistaminici orali</span>
+<span class="s2">                - Corticosteroidi nasali</span>
+<span class="s2">                - Decongestionanti</span>
+<span class="s2">                - Immunoterapia specifica</span>
+<span class="s2">                - Evitare allergeni</span>
+<span class="s2">                - Lavaggi nasali con soluzione salina&quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;categoria&quot;</span><span class="p">:</span> <span class="s2">&quot;allergico&quot;</span><span class="p">,</span> <span class="s2">&quot;malattia&quot;</span><span class="p">:</span> <span class="s2">&quot;rinite_allergica&quot;</span><span class="p">}</span>
+            <span class="p">),</span>
+            
+            <span class="c1"># Malattie infettive comuni</span>
+            <span class="n">Document</span><span class="p">(</span>
+                <span class="n">page_content</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;La polmonite è un&#39;infezione che infiamma gli alveoli polmonari.</span>
+<span class="s2">                </span>
+<span class="s2">                Agenti causali:</span>
+<span class="s2">                - Batterici (Streptococcus pneumoniae più comune)</span>
+<span class="s2">                - Virali</span>
+<span class="s2">                - Fungini (in immunocompromessi)</span>
+<span class="s2">                </span>
+<span class="s2">                Sintomi:</span>
+<span class="s2">                - Febbre alta con brividi</span>
+<span class="s2">                - Tosse produttiva con espettorato</span>
+<span class="s2">                - Dolore toracico pleuritico</span>
+<span class="s2">                - Dispnea</span>
+<span class="s2">                - Tachicardia</span>
+<span class="s2">                - Confusione (negli anziani)</span>
+<span class="s2">                </span>
+<span class="s2">                Diagnosi:</span>
+<span class="s2">                - Radiografia toracica</span>
+<span class="s2">                - Esami del sangue (PCR, emocromo)</span>
+<span class="s2">                - Coltura dell&#39;espettorato</span>
+<span class="s2">                </span>
+<span class="s2">                Trattamento:</span>
+<span class="s2">                - Antibiotici (amoxicillina, macrolidi)</span>
+<span class="s2">                - Supporto respiratorio se necessario</span>
+<span class="s2">                - Idratazione</span>
+<span class="s2">                - Antipiretici</span>
+<span class="s2">                - Fisioterapia respiratoria</span>
+<span class="s2">                - Vaccinazione preventiva&quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;categoria&quot;</span><span class="p">:</span> <span class="s2">&quot;infettivo&quot;</span><span class="p">,</span> <span class="s2">&quot;malattia&quot;</span><span class="p">:</span> <span class="s2">&quot;polmonite&quot;</span><span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+        
+        <span class="k">return</span> <span class="n">medical_documents</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_rag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Inizializza o carica il sistema RAG&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">persist_dir</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="c1"># Carica indice esistente</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vector_store</span> <span class="o">=</span> <span class="n">FAISS</span><span class="o">.</span><span class="n">load_local</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">persist_dir</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="p">,</span>
+                <span class="n">allow_dangerous_deserialization</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ Indice FAISS medico caricato da disco&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Crea nuovo indice</span>
+            <span class="n">documents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_medical_documents</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vector_store</span> <span class="o">=</span> <span class="n">FAISS</span><span class="o">.</span><span class="n">from_documents</span><span class="p">(</span>
+                <span class="n">documents</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span>
+            <span class="p">)</span>
+            <span class="c1"># Salva su disco</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vector_store</span><span class="o">.</span><span class="n">save_local</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">persist_dir</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ Nuovo indice FAISS medico creato e salvato&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Costruisci la chain RAG</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_rag_chain</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_format_docs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">docs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Formatta i documenti recuperati&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">---</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_rag_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Costruisce la chain RAG con LangChain&quot;&quot;&quot;</span>
+        <span class="c1"># Template del prompt</span>
+        <span class="n">template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Sei un assistente medico esperto. Usa le seguenti informazioni dal database medico per rispondere alla domanda.</span>
+<span class="s2">        Se le informazioni non sono sufficienti, indicalo chiaramente.</span>
+<span class="s2">        </span>
+<span class="s2">        Contesto dal database:</span>
+<span class="s2">        </span><span class="si">{context}</span>
+<span class="s2">        </span>
+<span class="s2">        Domanda: </span><span class="si">{question}</span>
+<span class="s2">        </span>
+<span class="s2">        Fornisci una risposta dettagliata, precisa e in italiano:&quot;&quot;&quot;</span>
+        
+        <span class="n">prompt</span> <span class="o">=</span> <span class="n">ChatPromptTemplate</span><span class="o">.</span><span class="n">from_template</span><span class="p">(</span><span class="n">template</span><span class="p">)</span>
+        
+        <span class="c1"># Crea il retriever</span>
+        <span class="n">retriever</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vector_store</span><span class="o">.</span><span class="n">as_retriever</span><span class="p">(</span>
+            <span class="n">search_type</span><span class="o">=</span><span class="s2">&quot;similarity&quot;</span><span class="p">,</span>
+            <span class="n">search_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">}</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Costruisci la chain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chain</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;context&quot;</span><span class="p">:</span> <span class="n">retriever</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_docs</span><span class="p">,</span> <span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="n">RunnablePassthrough</span><span class="p">()}</span>
+            <span class="o">|</span> <span class="n">prompt</span>
+            <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span>
+            <span class="o">|</span> <span class="n">StrOutputParser</span><span class="p">()</span>
+        <span class="p">)</span>
+    
+<div class="viewcode-block" id="RAGSystem.search">
+<a class="viewcode-back" href="../../../source_docs/rag_flow.tools.html#rag_flow.tools.rag_tool.RAGSystem.search">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Esegue una ricerca RAG&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">chain</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;❌ Sistema RAG non inizializzato correttamente&quot;</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span>
+            
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;❌ Errore nella ricerca RAG: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span></div>
+</div>
+
+
+<span class="c1"># Istanza globale del sistema RAG</span>
+<span class="n">_rag_system</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="get_rag_system">
+<a class="viewcode-back" href="../../../source_docs/rag_flow.tools.html#rag_flow.tools.rag_tool.get_rag_system">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_rag_system</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Restituisce l&#39;istanza singleton del sistema RAG&quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_rag_system</span>
+    <span class="k">if</span> <span class="n">_rag_system</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_rag_system</span> <span class="o">=</span> <span class="n">RAGSystem</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">_rag_system</span></div>
+
+
+<span class="nd">@tool</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">search_rag</span><span class="p">(</span><span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Effettua una ricerca nel database medico locale utilizzando RAG.</span>
+<span class="sd">    Restituisce informazioni mediche basate sui documenti hardcodati di esempio.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">rag_system</span> <span class="o">=</span> <span class="n">get_rag_system</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">rag_system</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Risultato della ricerca medica per &#39;</span><span class="si">{</span><span class="n">question</span><span class="si">}</span><span class="s2">&#39;:</span><span class="se">\n\n</span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Errore nella ricerca RAG: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">RagCrewai Documentation</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../source_docs/modules.html">rag_flow</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Michele Bruno.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

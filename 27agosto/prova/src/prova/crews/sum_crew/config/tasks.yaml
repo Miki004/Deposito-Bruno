@@ -1,0 +1,7 @@
+adding_task:
+  description: >
+    You will receive two numbers: the first {number1} and the {number2} and sum up togheter
+  expected_output: >
+    The sum of {number1} and the {number2}
+  agent: adder
+
