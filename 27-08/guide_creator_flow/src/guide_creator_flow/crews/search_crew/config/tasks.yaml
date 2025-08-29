@@ -1,0 +1,7 @@
+summarize_results:
+  description: >
+    "Fornisci informazioni dettagliate e un riassunto sull'argomento: {topic}. Usa le tue conoscenze per fornire almeno 3 punti chiave importanti sull'argomento."
+  expected_output: >
+     "Un riassunto dettagliato con almeno 3 punti chiave sull'argomento richiesto."
+  agent: >
+    web_researcher

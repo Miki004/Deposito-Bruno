@@ -1,0 +1,7 @@
+rag_task:
+  description: >
+    You have to improve the user query: {query} by searching inside your vector database
+  expected_output: >
+    a test with the augmented query by the similar documents
+  agent: rag_agent
+
