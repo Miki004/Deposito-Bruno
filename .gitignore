@@ -1,3 +1,17 @@
 *.csv
 *.env
 *.txt
+*.bat
+Makefile
+*.lock
+_static
+source_docs
+.buildinfo
+.nojekyll
+*.js
+*.inv
+*pickle
+*.doctree
+*.sqlite3
+_modules
+*.md
