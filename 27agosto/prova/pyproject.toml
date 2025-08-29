@@ -1,0 +1,21 @@
+[project]
+name = "prova"
+version = "0.1.0"
+description = "prova using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "crewai[tools]>=0.175.0,<1.0.0",  # Use a more stable version range
+]
+
+[project.scripts]
+kickoff = "prova.main:kickoff"
+run_crew = "prova.main:kickoff"
+plot = "prova.main:plot"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "flow"
