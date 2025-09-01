@@ -1,0 +1,4 @@
+site_name: RagCrewai Ethical Documentation
+nav:
+    - Ethical Aspects: index.md
+theme: readthedocs

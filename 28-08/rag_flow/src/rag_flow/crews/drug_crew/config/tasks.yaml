@@ -1,0 +1,26 @@
+
+drug_research_task:
+  description: >
+    Given the patient' drug: {drug_name},
+    perform a comprehensive online search using DuckDuckGo to retrieve its full drug leaflet (bugiardino).
+    Focus on sections like dosage, administration, contraindications, side effects, and warnings.
+  expected_output: >
+    A detailed summary of the drug leaflet, including all critical information required for dosage calculation.
+    The agent must not perform more than three search attempts.
+    Please return the output in a JSON format, no links.
+  agent: drug_researcher
+  
+
+drug_calculation_task:
+  description: >
+    Calculate the correct dosage of a drug based on the patient's description: {description}
+    and the drug leaflet provided from the online researcher.
+    You must consider all details from both the patient description and the drug leaflet for an accurate calculation.
+    If the drug is not specified in the initial description, you must explicitly state that the drug information is missing.
+  expected_output: >
+    The calculated drug dosage, clearly stating the drug, the dosage, and any important considerations or assumptions made.
+    If drug information is missing, output 'Drug not specified. Please provide the name of the drug.'.
+    If drug leaflet information is missing, output 'Drug leaflet information is missing, unable to calculate dosage.'.
+  agent: drug_calculator
+  context:
+    - drug_research_task

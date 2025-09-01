@@ -1,57 +1,84 @@
-from crewai.tools import tool
-from typing import Type
-from crewai.tools import BaseTool
-from pathlib import Path
-from typing import List
-import os
-from langchain.schema import Document
-from langchain_community.vectorstores import FAISS
+from dataclasses import dataclass
 from langchain_openai import AzureOpenAIEmbeddings
+from dotenv import load_dotenv
+import os 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
 from langchain_openai import AzureChatOpenAI
-from dotenv import load_dotenv
+from langchain.schema import Document
+from typing import List
 
 load_dotenv()
+@dataclass
+class Settings:
+    # Persistenza FAISS
+    persist_dir: str = "faiss_index_example"
+    # Text splitting
+    chunk_size: int = 700
+    chunk_overlap: int = 100
+    # Retriever (MMR)
+    search_type: str = "mmr"        # "mmr" o "similarity"
+    k: int = 4                      # risultati finali
+    fetch_k: int = 20               # candidati iniziali (per MMR)
+    mmr_lambda: float = 0.3         # 0 = diversificazione massima, 1 = pertinenza massima
+    # Embedding
+    azure_endpoint = os.getenv("AZURE_ENDPOINT")
+    key = os.getenv("API_KEY")
+    llm_key = os.getenv("API_LLM_KEY")
+    azure_llm_endpoint = os.getenv("AZURE_LLM_ENDPOINT")
+    #hf_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
+    # LM Studio (OpenAI-compatible)
+    deployment_name = os.getenv("AZURE_DEPLOYMENT_NAME")
+    model_name: str = "gpt-4o"
+    lmstudio_model_env: str = "LMSTUDIO_MODEL"  # nome del modello in LM Studio, via env var
 
-class RAGSystem:
-    """Manages the RAG (Retrieval Augmented Generation) system for medical information."""
-    def __init__(self):
-        self.persist_dir = "faiss_index_medical"
-        self.k = 4
-        
-        self.embeddings = self._get_embeddings()
-        self.llm = self._get_llm()
-        self.vector_store = None
-        self.chain = None
-        
-        self._initialize_rag()
-    
-    def _get_embeddings(self):
-        """Inizializza embedding Azure OpenAI"""
-        api_key = os.getenv("API_KEY")
-        return AzureOpenAIEmbeddings(
-            model="text-embedding-ada-002",
-            azure_endpoint=os.getenv("AZURE_ENDPOINT"),
-            api_key=api_key
-        )
-    
-    def _get_llm(self):
-        """Inizializza LLM Azure OpenAI"""
-        api_key = os.getenv("API_LLM_KEY")
-        endpoint = os.getenv("AZURE_LLM_ENDPOINT")
-        deployment = os.getenv("AZURE_DEPLOYMENT_NAME")
+class Rag:
 
-        return AzureChatOpenAI(
-            deployment_name=deployment,
-            openai_api_version="2024-12-01-preview",
-            azure_endpoint=endpoint,
-            openai_api_key=api_key,
-            temperature=0.1
+    def __init__(self,settings: Settings):
+        # Chunk -> Embedding -> store  
+        self.embedder = self.define_embedder(settings)
+        self.llm = self.define_llm(settings)
+        #splittare i docs
+        chunks = self.split_docs()
+        #converte i chunks in una loro rappresentazione vettoriale 
+        self.vec_db = self.define_vector_db(settings,chunks)
+        print("Vec init")
+        self.retriver = self.make_retriever(settings)
+
+        self.chain = self.build_rag_chain()
+
+
+    def define_llm(self,settings: Settings):
+        llm = AzureChatOpenAI(
+            api_version="2024-12-01-preview",
+            azure_endpoint=settings.azure_llm_endpoint,
+            api_key=settings.llm_key,
+            azure_deployment="gpt-4o",  # Replace with actual deployment
+            temperature=0.1,
+            max_tokens=1000,  # Optional: control response length
         )
+        return llm
     
-    def _create_medical_documents(self) -> List[Document]:
+    def define_embedder(self, settings: Settings):
+        embedding = AzureOpenAIEmbeddings(
+            api_version="2024-12-01-preview",
+            azure_endpoint=settings.azure_endpoint,
+            api_key=settings.key,
+        )
+        return embedding
+    
+    def define_vector_db(self, settings: Settings, chunks):
+        index = FAISS.from_documents(
+            documents=chunks,
+            #passare la funzione di embedding 
+            embedding=self.embedder
+        )
+        return index
+    
+    def _create_documents(self) -> List[Document]:
         """Crea documenti medici di esempio hardcodati"""
         medical_documents = [
             # Malattie respiratorie
@@ -304,94 +331,66 @@ class RAGSystem:
         
         return medical_documents
     
-    def _initialize_rag(self):
-        """Inizializza o carica il sistema RAG"""
-        if Path(self.persist_dir).exists():
-            # Carica indice esistente
-            self.vector_store = FAISS.load_local(
-                self.persist_dir,
-                self.embeddings,
-                allow_dangerous_deserialization=True
-            )
-            print("✅ Indice FAISS medico caricato da disco")
-        else:
-            # Crea nuovo indice
-            documents = self._create_medical_documents()
-            self.vector_store = FAISS.from_documents(
-                documents,
-                self.embeddings
-            )
-            # Salva su disco
-            self.vector_store.save_local(self.persist_dir)
-            print("✅ Nuovo indice FAISS medico creato e salvato")
-        
-        # Costruisci la chain RAG
-        self._build_rag_chain()
-    
-    def _format_docs(self, docs: List[Document]) -> str:
-        """Formatta i documenti recuperati"""
-        return "\n\n---\n\n".join(doc.page_content for doc in docs)
-    
-    def _build_rag_chain(self):
-        """Costruisce la chain RAG con LangChain"""
-        # Template del prompt
-        template = """Sei un assistente medico esperto. Usa le seguenti informazioni dal database medico per rispondere alla domanda.
-        Se le informazioni non sono sufficienti, indicalo chiaramente.
-        
-        Contesto dal database:
-        {context}
-        
-        Domanda: {question}
-        
-        Fornisci una risposta dettagliata, precisa e in italiano:"""
-        
-        prompt = ChatPromptTemplate.from_template(template)
-        
-        # Crea il retriever
-        retriever = self.vector_store.as_retriever(
-            search_type="similarity",
-            search_kwargs={"k": self.k}
+    def split_docs(self):
+        splitter = RecursiveCharacterTextSplitter(
+        separators=["\n\n", "\n", ".", ":", ";", " "]
         )
+        docs = self._create_documents()
+        chunks = splitter.split_documents(docs)
+        return chunks
+    
+    def make_retriever(self,settings: Settings):
+        """
+        Configura il retriever. Con 'mmr' otteniamo risultati meno ridondanti e più coprenti.
+        """
+        if settings.search_type == "mmr":
+            return self.vec_db.as_retriever(
+                search_type="mmr",
+                search_kwargs={"k": settings.k, "fetch_k": settings.fetch_k, "lambda_mult": settings.mmr_lambda},
+            )
+        else:
+            return self.vec_db.as_retriever(
+                search_type="similarity",
+                search_kwargs={"k": settings.k},
+            )
         
-        # Costruisci la chain
-        self.chain = (
-            {"context": retriever | self._format_docs, "question": RunnablePassthrough()}
+    def build_rag_chain(self):
+        """
+        Costruisce la catena RAG (retrieval -> prompt -> LLM) con citazioni e regole anti-hallucination.
+        """
+        template = (
+            "Sei un medico esperto. Rispondi nella lingua della domanda. "
+            "Usa esclusivamente il contenuto fornito all'interno del database   . "
+            "Se l'informazione non è presente, dichiara che non è disponibile. "
+            "Includi citazioni tra parentesi quadre nel formato [source:...]. "
+            "Sii conciso, accurato e tecnicamente corretto       "
+            "Contesto dal database: {context}"
+            "Domanda: {question}"
+            "Fornisci una risposta dettagliata, precisa e in italiano:"
+        )
+
+        prompt = ChatPromptTemplate.from_template(template)
+
+        # LCEL: dict -> prompt -> llm -> parser
+        chain = (
+            {
+                "context": self.retriver, 
+                "question": RunnablePassthrough(),
+            }
             | prompt
             | self.llm
             | StrOutputParser()
         )
+
+        return chain
     
-    def search(self, question: str) -> str:
-        """Esegue una ricerca RAG"""
-        if not self.chain:
-            return "❌ Sistema RAG non inizializzato correttamente"
-        
-        try:
-            result = self.chain.invoke(question)
-            return result
-            
-        except Exception as e:
-            return f"❌ Errore nella ricerca RAG: {str(e)}"
+    def rag_answer(self,question: str) -> str:
+        """
+        Esegue la catena RAG per una singola domanda.
+        """
+        return self.chain.invoke(question)
+    
+    
+    
 
-# Istanza globale del sistema RAG
-_rag_system = None
-
-def get_rag_system():
-    """Restituisce l'istanza singleton del sistema RAG"""
-    global _rag_system
-    if _rag_system is None:
-        _rag_system = RAGSystem()
-    return _rag_system
-
-@tool
-def search_rag(question: str) -> str:
-    """
-    Effettua una ricerca nel database medico locale utilizzando RAG.
-    Restituisce informazioni mediche basate sui documenti hardcodati di esempio.
-    """
-    try:
-        rag_system = get_rag_system()
-        result = rag_system.search(question)
-        return f"Risultato della ricerca medica per '{question}':\n\n{result}"
-    except Exception as e:
-        return f"Errore nella ricerca RAG: {str(e)}"
+    
