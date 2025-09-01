@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from crewai import LLM
 from crewai.flow.flow import Flow, listen, start, router
 from src.rag_flow.crews.content_crew.content_crew import ContentCrew
+from src.rag_flow.crews.drug_crew.drug_crew import DrugCrew
 from src.rag_flow.crews.rag_crew.rag_crew import RagCrew
 
 
@@ -13,8 +14,9 @@ from src.rag_flow.crews.rag_crew.rag_crew import RagCrew
 class GuideCreatorState(BaseModel):
     """Represents the state of the guide creation flow."""
     topic: str = ""
-    choice : str = ""
     output : str = ""
+    drug_name: str = ""
+    description: str = ""
 
 class GuideCreatorFlow(Flow[GuideCreatorState]):
     """Flow for creating a comprehensive guide on any topic"""
@@ -22,79 +24,59 @@ class GuideCreatorFlow(Flow[GuideCreatorState]):
     @start()
     def get_user_input(self):
         """Get input from the user about the guide topic and audience"""
-        print("\n=== RAG AGENT  ===\n")
-        # Get user input
-        self.state.topic = "dimmi qualcosa sulle malattie cardiovascolari "
+        print("\n=== Virtual Pharmacy ===\n")
+        print("Dimmi di cosa hai bisogno?")
+        print("1.Ricerca su RAG")
+        print("2.Richiesta calcolo del dosaggio di un farmaco")
+        choice = int(input("Inserire scelta: "))
 
-        return self.state
+        if choice == 2:
+            self.state.description = input("Forniscimi una descrizione del paziente (peso, eta', sesso, condizioni mediche): ")
+            self.state.drug_name = input("Inserisci il nome del farmaco: ")
+        elif choice == 1:
+            self.state.topic = input("Inserisci la domanda di carattere medico: ")
 
-    @listen(get_user_input)
+        return choice
+    
+    @router(get_user_input)
+    def routing(self,choice):
+        if choice == 1:
+            return "rag_search"
+        else:
+            return "drug_calculation"
+
+    @listen("rag_search")
     def executing_rag(self,state):
         """Executes the RAG (Retrieval Augmented Generation) process based on the user's topic."""
-        query = state.topic
+        query = self.state.topic
         crew = RagCrew() 
         crew_output = crew.crew().kickoff(
             inputs = {
                 "query" : query
             }
         )
-        return crew_output
-    
-    @router(executing_rag)
-    def routing(self,crew_output):
-        """Routes the flow based on the output of the RAG crew."""
-        self.state.output = crew_output
-        if crew_output == "failed":
-            return "search"
-        else:
-            return "print"
-        
-    # @router(get_user_input)
-    # def routing(self, state):
-    #     if state.topic.lower() == "SEARCH":
-    #         return "search"
-    #     else:
-    #         return ""
+        return crew_output.raw
 
-    # @listen("add")
-    # def run_adder_crew(self):
-    #     """Run the adder crew"""
-    #     print("Runnig the adding crew")
-    #     number1 = input("Write the first number: ")
-    #     number2 = input("Write the second numer:")
-    #     crew = SumCrew()
-    #     crew_output = crew.crew().kickoff(
-    #         inputs = {
-    #             "number1" : number1,
-    #             "number2" : number2
-    #         }
-    #     )
-    #     print(f"Output adder: {crew_output}")
-    
-    @listen("print")
-    def print(self):
+    @listen("executing_rag")
+    def print_rag_output(self,crew_output):
         """Prints the output from the RAG agent."""
-        print(f"OUTPUT OF THE RAG AGENT: {self.state.output}")
+        print(f"OUTPUT OF THE RAG AGENT: {crew_output}")
 
-    @listen("search")
-    def run_crew(self):
-        """Run the web search crew to gather information and create the guide"""
-        print("Running the web search crew...")
-
-        # Initialize and run the crew
-        crew = ContentCrew()
+    @listen("drug_calculation")
+    def executing_drug_calculation(self):
+        crew = DrugCrew()
         crew_output = crew.crew().kickoff(
-            inputs={
-                "topic": self.state.topic,
-                "web_search_task": {
-                    "topic": self.state.topic
-                },
-                "summarization_task": {
-                    "topic": self.state.topic
-                }
+            inputs = {
+                "description" : self.state.description,
+                "drug_name" : self.state.drug_name
             }
-        )        
-        print("Web search crew completed.")
+        )
+        return crew_output.raw
+
+    @listen("executing_drug_calculation")
+    def print_drug_calculation_output(self, crew_output):
+        """Prints the output from the drug calculation agent."""
+        print(f"OUTPUT OF THE DRUG CALCULATION: {crew_output}")
 
 def kickoff():
     """Run the guide creator flow"""

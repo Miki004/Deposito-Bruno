@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>RagCrewai Ethical Documentation</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Ethical Aspects";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> RagCrewai Ethical Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Ethical Aspects</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#sistema-rag-per-ricerca-documenti-medici-e-calcolo-dosaggi-farmaceutici">Sistema RAG per Ricerca Documenti Medici e Calcolo Dosaggi Farmaceutici</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#general-information">General Information</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#purpose-and-intended-use">Purpose and Intended Use</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#risk-classification">Risk Classification</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#application-functionality">Application Functionality</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#instructions-for-use-for-deployers">Instructions for use for deployers</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#lifecycle-management">Lifecycle Management</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#monitoring-procedures-for-performance-and-ethical-compliance">Monitoring procedures for performance and ethical compliance</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#risk-management-system">Risk Management System</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#eu-ai-act-article-9-article-11-annex-iv">EU AI Act Article 9 &amp; Article 11; Annex IV</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#risk-assessment-methodology">Risk Assessment Methodology:</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#identified-risks">Identified Risks:</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#risk-mitigation-measures">Risk Mitigation Measures</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#testing-and-validation-accuracy-robustness-cybersecurity">Testing and Validation (Accuracy, Robustness, Cybersecurity)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#eu-ai-act-article-15">EU AI Act Article 15</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#robustness">Robustness</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#cybersecurity">Cybersecurity</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#human-oversight">Human Oversight</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#eu-ai-act-article-11-annex-iv-paragraph-2e-article-14">EU AI Act Article 11; Annex IV paragraph 2(e) &amp; Article 14</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#incident-management">Incident Management</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#data-quality-problems">Data Quality Problems</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#safety-and-security-issues">Safety and Security Issues</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#eu-declaration-of-conformity">EU Declaration of Conformity</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#eu-ai-act-article-47">EU AI Act Article 47</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#standards-applied">Standards Applied</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">RagCrewai Ethical Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Ethical Aspects</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="application-documentation-ethical-aspects">Application Documentation: Ethical Aspects</h1>
+<h2 id="sistema-rag-per-ricerca-documenti-medici-e-calcolo-dosaggi-farmaceutici">Sistema RAG per Ricerca Documenti Medici e Calcolo Dosaggi Farmaceutici</h2>
+<h2 id="general-information">General Information</h2>
+<h3 id="purpose-and-intended-use">Purpose and Intended Use</h3>
+<p>Questa applicazione RAG (Retrieval-Augmented Generation) è progettata per assistere professionisti sanitari nella ricerca di informazioni mediche da una base di documenti hardcodati e nel calcolo di dosaggi farmaceutici attraverso agenti AI che recuperano bugiardini online.</p>
+<p><strong>Uso Previsto:</strong>
+- Supporto decisionale per medici e farmacisti qualificati
+- Ricerca rapida di informazioni farmacologiche validate
+- Calcolo preliminare di dosaggi basato su linee guida standardizzate
+- Strumento di consultazione per professionisti sanitari autorizzati</p>
+<p><strong>Usi Proibiti:</strong>
+- Sostituzione del giudizio medico professionale
+- Uso diretto da parte di pazienti per autodiagnosi o automedicazione
+- Prescrizione automatica senza supervisione medica
+- Uso in situazioni di emergenza critiche senza validazione umana
+- Utilizzo da parte di personale non qualificato in ambito sanitario</p>
+<h3 id="risk-classification">Risk Classification</h3>
+<p><strong>High-Risk Application</strong> secondo EU AI Act Chapter III, Section 1 Article 6</p>
+<p><strong>Ragionamento per la classificazione:</strong>
+- L'applicazione opera nel settore sanitario e farmaceutico (Annex III punto 1(a))
+- Coinvolge decisioni che possono impattare significativamente sulla salute e sicurezza dei pazienti
+- Utilizza AI per supportare decisioni mediche critiche
+- La natura dei calcoli farmaceutici richiede elevata precisione per evitare rischi per la salute</p>
+<h2 id="application-functionality">Application Functionality</h2>
+<h3 id="instructions-for-use-for-deployers">Instructions for use for deployers</h3>
+<p><strong>EU AI Act Article 13</strong></p>
+<p><strong>Requisiti per il Deployment:</strong>
+1. <strong>Qualifica del Personale:</strong> Solo professionisti sanitari autorizzati possono utilizzare il sistema
+2. <strong>Ambiente Controllato:</strong> Implementazione esclusivamente in strutture sanitarie certificate
+3. <strong>Supervisione Medica:</strong> Ogni output deve essere validato da un medico qualificato
+4. <strong>Formazione Obbligatoria:</strong> Gli utilizzatori devono completare training specifico sul sistema
+5. <strong>Backup Procedures:</strong> Sistemi di fallback devono essere sempre disponibili
+6. <strong>Audit Trail:</strong> Logging completo di tutte le query e risultati per tracciabilità</p>
+<p><strong>Configurazione Tecnica:</strong>
+- Accesso limitato tramite autenticazione multi-fattore
+- Crittografia end-to-end per tutti i dati sensibili
+- Segregazione di rete per prevenire accessi non autorizzati
+- Backup automatici e piani di disaster recovery</p>
+<h2 id="lifecycle-management">Lifecycle Management</h2>
+<h3 id="monitoring-procedures-for-performance-and-ethical-compliance">Monitoring procedures for performance and ethical compliance</h3>
+<p><strong>Monitoraggio Continuo:</strong>
+- <strong>Performance Metrics:</strong> Accuratezza delle ricerche RAG (target &gt;95%), tempi di risposta (&lt;2 secondi), disponibilità del sistema (99.9%)
+- <strong>Clinical Validation:</strong> Revisione trimestrale da parte di un comitato medico-scientifico
+- <strong>Bias Monitoring:</strong> Analisi mensile per identificare bias sistematici nelle ricerche o calcoli
+- <strong>User Feedback:</strong> Sistema di reporting per feedback clinici e identificazione di problemi</p>
+<p><strong>Compliance Checks:</strong>
+- Audit settimanali automatizzati per conformità agli standard medici
+- Verifica trimestrale dell'aggiornamento dei database farmaceutici
+- Controllo semestrale della conformità GDPR e normative sanitarie
+- Assessment annuale di impatto etico da parte di esperti esterni</p>
+<h2 id="risk-management-system">Risk Management System</h2>
+<h3 id="eu-ai-act-article-9-article-11-annex-iv">EU AI Act Article 9 &amp; Article 11; Annex IV</h3>
+<h4 id="risk-assessment-methodology">Risk Assessment Methodology:</h4>
+<p><strong>Framework Utilizzati:</strong>
+- ISO 14971 (Medical Devices Risk Management)
+- ISO 31000 (Risk Management Guidelines)
+- NIST AI Risk Management Framework
+- Clinical Risk Assessment per sistemi sanitari</p>
+<h4 id="identified-risks">Identified Risks:</h4>
+<p><strong>Potential Harmful Outcomes:</strong></p>
+<ol>
+<li><strong>Errori di Calcolo Dosaggio:</strong></li>
+<li><strong>Likelihood:</strong> Media (2/5) - <strong>Severity:</strong> Critica (5/5)</li>
+<li>
+<p><strong>Impact:</strong> Sovradosaggio o sottodosaggio con conseguenze cliniche gravi</p>
+</li>
+<li>
+<p><strong>Informazioni Mediche Obsolete:</strong></p>
+</li>
+<li><strong>Likelihood:</strong> Media (2/5) - <strong>Severity:</strong> Alta (4/5)</li>
+<li>
+<p><strong>Impact:</strong> Decisioni basate su dati non aggiornati</p>
+</li>
+<li>
+<p><strong>Bias negli Algoritmi:</strong></p>
+</li>
+<li><strong>Likelihood:</strong> Bassa (1/5) - <strong>Severity:</strong> Alta (4/5)</li>
+<li>
+<p><strong>Impact:</strong> Discriminazione verso specifici gruppi di pazienti</p>
+</li>
+<li>
+<p><strong>Accesso Non Autorizzato:</strong></p>
+</li>
+<li><strong>Likelihood:</strong> Bassa (1/5) - <strong>Severity:</strong> Critica (5/5)</li>
+<li>
+<p><strong>Impact:</strong> Violazione privacy pazienti e uso improprio del sistema</p>
+</li>
+<li>
+<p><strong>Dipendenza Eccessiva dal Sistema:</strong></p>
+</li>
+<li><strong>Likelihood:</strong> Alta (4/5) - <strong>Severity:</strong> Media (3/5)</li>
+<li><strong>Impact:</strong> Riduzione delle competenze cliniche autonome</li>
+</ol>
+<h4 id="risk-mitigation-measures">Risk Mitigation Measures</h4>
+<p><strong>Preventive Measures:</strong>
+- <strong>Validazione Incrociata:</strong> Ogni calcolo è verificato con almeno due fonti indipendenti
+- <strong>Database Aggiornati:</strong> Update automatici settimanali dei bugiardini e linee guida
+- <strong>Training Anti-Bias:</strong> Algoritmi addestrati su dataset diversificati e rappresentativi
+- <strong>Controlli di Accesso:</strong> Autenticazione forte e autorizzazioni granulari
+- <strong>Formazione Continua:</strong> Training regolare per mantenere competenze cliniche</p>
+<p><strong>Protective Measures:</strong>
+- <strong>Alert System:</strong> Notifiche automatiche per dosaggi fuori range normale
+- <strong>Human Override:</strong> Possibilità di sovrascrivere sempre le raccomandazioni AI
+- <strong>Rollback Capability:</strong> Possibilità di tornare a versioni precedenti in caso di problemi
+- <strong>Emergency Protocols:</strong> Procedure chiare per situazioni critiche
+- <strong>Incident Response:</strong> Team dedicato per gestione rapida di problemi</p>
+<h2 id="testing-and-validation-accuracy-robustness-cybersecurity">Testing and Validation (Accuracy, Robustness, Cybersecurity)</h2>
+<h3 id="eu-ai-act-article-15">EU AI Act Article 15</h3>
+<h4 id="robustness">Robustness</h4>
+<p><strong>Outlier Detection e Post-Analysis:</strong>
+- <strong>Anomaly Detection:</strong> Sistema automatico per identificare query o risultati anomali
+- <strong>Statistical Validation:</strong> Controlli statistici per identificare deviazioni significative
+- <strong>Clinical Review:</strong> Panel di esperti per validazione di casi edge
+- <strong>Performance Degradation Monitoring:</strong> Allerta per cali di performance del sistema</p>
+<p><strong>Criticità Identificate:</strong>
+- Farmaci nuovi non presenti nel database
+- Interazioni farmacologiche complesse
+- Pazienti con condizioni multiple (comorbidità)
+- Dosaggi pediatrici e geriatrici</p>
+<p><strong>Misure di Robustezza:</strong>
+- <strong>Adversarial Training:</strong> Addestramento contro input malevoli
+- <strong>Stress Testing:</strong> Test sotto carico elevato e condizioni estreme
+- <strong>Redundancy:</strong> Sistemi di backup multipli
+- <strong>Graceful Degradation:</strong> Modalità ridotta in caso di malfunzionamenti
+- <strong>Confidence Scoring:</strong> Punteggi di affidabilità per ogni risultato</p>
+<h4 id="cybersecurity">Cybersecurity</h4>
+<p><strong>EU AI Act Article 11; Annex IV paragraph 2(h)</strong></p>
+<p><strong>Data Security:</strong>
+- <strong>Crittografia:</strong> AES-256 per dati a riposo, TLS 1.3 per dati in transito
+- <strong>Tokenizzazione:</strong> Dati sensibili tokenizzati per ridurre esposizione
+- <strong>Segregazione:</strong> Isolamento di rete tra componenti critici
+- <strong>Backup Sicuri:</strong> Backup crittografati con testing regolare di restore</p>
+<p><strong>Access Control:</strong>
+- <strong>Zero Trust Architecture:</strong> Verifica continua di identità e autorizzazioni
+- <strong>Role-Based Access:</strong> Permessi granulari basati su ruolo professionale
+- <strong>Session Management:</strong> Timeout automatici e monitoraggio sessioni
+- <strong>Audit Logging:</strong> Log completo di tutti gli accessi e operazioni</p>
+<p><strong>Incident Response:</strong>
+- <strong>SOC 24/7:</strong> Security Operations Center per monitoraggio continuo
+- <strong>Automated Threat Detection:</strong> Sistemi AI per rilevamento anomalie
+- <strong>Incident Playbooks:</strong> Procedure standardizzate per diversi tipi di incidenti
+- <strong>Forensic Capabilities:</strong> Strumenti per analisi post-incidente
+- <strong>Stakeholder Communication:</strong> Piani di comunicazione per autorità e utenti</p>
+<h2 id="human-oversight">Human Oversight</h2>
+<h3 id="eu-ai-act-article-11-annex-iv-paragraph-2e-article-14">EU AI Act Article 11; Annex IV paragraph 2(e) &amp; Article 14</h3>
+<p><strong>Human-in-the-Loop Mechanisms:</strong>
+- <strong>Mandatory Review:</strong> Ogni calcolo di dosaggio richiede approvazione medica
+- <strong>Clinical Decision Support:</strong> Sistema funge solo da supporto, non da sostituto
+- <strong>Expert Consultation:</strong> Accesso diretto a specialisti per casi complessi
+- <strong>Patient Context Integration:</strong> Interfaccia per inserire storia clinica specifica</p>
+<p><strong>Override and Intervention Procedures:</strong>
+- <strong>Emergency Stop:</strong> Pulsante per disattivazione immediata del sistema
+- <strong>Manual Override:</strong> Possibilità di modificare qualsiasi raccomandazione
+- <strong>Alternative Sources:</strong> Accesso rapido a fonti mediche alternative
+- <strong>Escalation Protocols:</strong> Procedure chiare per casi dubbi o critici</p>
+<p><strong>User Instructions and Training:</strong>
+- <strong>Certification Program:</strong> Corso obbligatorio di 20 ore per nuovi utenti
+- <strong>Refresher Training:</strong> Aggiornamenti annuali di 8 ore
+- <strong>Clinical Guidelines:</strong> Protocolli specifici per uso in diversi contesti
+- <strong>Best Practices:</strong> Linee guida per ottimizzazione dell'uso clinico</p>
+<p><strong>Limitations and Constraints of the System:</strong>
+- <strong>Non sostituisce il giudizio clinico:</strong> Il sistema fornisce solo supporto decisionale
+- <strong>Database limitato:</strong> Copre solo farmaci nella base dati hardcodata
+- <strong>Aggiornamenti necessari:</strong> Richiede manutenzione regolare per rimanere accurato
+- <strong>Contesto limitato:</strong> Non considera sempre comorbidità complesse
+- <strong>Popolazioni speciali:</strong> Limitazioni per pediatria, geriatria e condizioni rare</p>
+<h2 id="incident-management">Incident Management</h2>
+<h3 id="data-quality-problems">Data Quality Problems</h3>
+<p><strong>Problem:</strong> Inaccurate or corrupt data leads to poor predictions.</p>
+<p><strong>Causes:</strong>
+- Documenti medici hardcodati obsoleti o contenenti errori
+- Bugiardini online modificati o non aggiornati
+- Errori di parsing nei processi RAG
+- Inconsistenze tra diverse fonti mediche</p>
+<p><strong>Mitigation Strategy:</strong>
+- <strong>Validazione Multi-Source:</strong> Verifica incrociata con almeno 3 fonti autorevoli
+- <strong>Version Control:</strong> Tracciamento versioni per tutti i documenti
+- <strong>Expert Review:</strong> Revisione trimestrale da parte di farmacologi clinici
+- <strong>Automated Checks:</strong> Algoritmi per identificare inconsistenze nei dati
+- <strong>User Reporting:</strong> Sistema semplificato per segnalare errori identificati
+- <strong>Rapid Response:</strong> Procedura di correzione entro 4 ore per errori critici</p>
+<h3 id="safety-and-security-issues">Safety and Security Issues</h3>
+<p><strong>Unauthorised Access:</strong>
+- <strong>Cause:</strong> Configurazioni di sicurezza inadeguate, credenziali compromesse
+- <strong>Impact:</strong> Accesso a informazioni mediche sensibili, uso improprio del sistema
+- <strong>Mitigation Strategy:</strong>
+  - Autenticazione multi-fattore obbligatoria
+  - Monitoraggio continuo degli accessi
+  - Revoca immediata di credenziali sospette
+  - Audit regolari delle configurazioni di sicurezza</p>
+<p><strong>Data Breaches:</strong>
+- <strong>Cause:</strong> Vulnerabilità software, attacchi esterni, errori di configurazione
+- <strong>Impact:</strong> Compromissione dati pazienti, perdita di fiducia, sanzioni legali
+- <strong>Mitigation Strategy:</strong>
+  - Crittografia end-to-end per tutti i dati
+  - Network segmentation e firewall avanzati
+  - Penetration testing trimestrale
+  - Incident response plan con notifica entro 24 ore
+  - Backup sicuri e piani di disaster recovery testati</p>
+<h2 id="eu-declaration-of-conformity">EU Declaration of Conformity</h2>
+<h3 id="eu-ai-act-article-47">EU AI Act Article 47</h3>
+<p><strong>Dichiarazione di Conformità:</strong>
+Il sistema è conforme ai requisiti dell'EU AI Act per applicazioni ad alto rischio nel settore sanitario, inclusi:
+- Articolo 8: Sistema di gestione della qualità
+- Articolo 9: Gestione del rischio
+- Articolo 10: Governance e qualità dei dati
+- Articolo 11: Documentazione tecnica
+- Articolo 12: Conservazione dei record
+- Articolo 13: Trasparenza e informazioni per gli utenti
+- Articolo 14: Supervisione umana
+- Articolo 15: Accuratezza, robustezza e cybersecurity</p>
+<h3 id="standards-applied">Standards Applied</h3>
+<p><strong>Standard Tecnici:</strong>
+- ISO 14971:2019 (Medical devices — Application of risk management)
+- ISO 27001:2022 (Information security management systems)
+- ISO 13485:2016 (Medical devices — Quality management systems)
+- IEC 62304:2006 (Medical device software — Software life cycle processes)</p>
+<p><strong>Standard AI e ML:</strong>
+- ISO/IEC 23053:2022 (Framework for AI risk management)
+- ISO/IEC 23894:2023 (AI risk management)
+- IEEE 2857-2021 (Privacy Engineering for AI and ML)</p>
+<p><strong>Standard Sanitari:</strong>
+- HL7 FHIR R4 (Healthcare data exchange)
+- SNOMED CT (Clinical terminology)
+- ICD-11 (International Classification of Diseases)</p>
+<p><strong>Certificazioni:</strong>
+- CE Marking per dispositivi medici software
+- Certificazione ISO 27001 per sicurezza informazioni
+- Validazione clinica secondo MDR (Medical Device Regulation)
+- Conformità GDPR per protezione dati personali</p>
+<hr />
+<p><strong>Data di redazione:</strong> [Data]<br />
+<strong>Versione documento:</strong> 1.0<br />
+<strong>Responsabile:</strong> [Nome e ruolo]<br />
+<strong>Prossima revisione:</strong> [Data + 12 mesi]</p>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.6.1
+Build Date UTC : 2025-09-01 10:12:53.810909+00:00
+-->

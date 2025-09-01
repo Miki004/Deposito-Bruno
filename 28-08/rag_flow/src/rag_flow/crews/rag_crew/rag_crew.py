@@ -1,8 +1,8 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
+from src.rag_flow.tools.custom_tool import MyRAGTool
 from typing import List
-from src.rag_flow.tools.rag_tool import search_rag
 
 
 @CrewBase
@@ -21,7 +21,7 @@ class RagCrew():
         return Agent(
             config=self.agents_config["rag_agent"],
             allow_delegation=False,
-            tools=[search_rag]
+            tools=[MyRAGTool()]
         )
 
     @task
